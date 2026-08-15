@@ -22,6 +22,36 @@ trustworthy, neutral, and useful even if any one person or app disappears.
 5. **Portability.** The data must be usable even if OpenPianos itself vanishes — hence public
    exports + a versioned git mirror. No lock-in, ever.
 
+## Access & trust — who can read vs. write
+
+**Open to read ≠ open to overwrite.** CC0 makes the data free to read, use, and redistribute; *who may
+write* is a separate question. OpenPianos is open to contribution too — but safely, because of the
+observation model.
+
+- **Contribution is open, and safe by construction.** Every write is an additive, weighted, reversible
+  *observation* — nobody overwrites the canonical, they add evidence, and the confidence resolution
+  decides what wins (see `SCHEMA.md §4`). An anonymous "it's gone" (0.25) cannot override a verified
+  operator's "it's here" (0.95); spam is low-tier, never wins, and is reversible. **"Open write" means
+  *anyone may propose an observation* — not *anyone may edit the answer*.** That's the difference from a
+  wiki where one edit can blank a page.
+- **Identity + trust tiers are the account system.** Contributions are weighted by *who* made them:
+  `owner` → `operator` (own venue) → `ambassador` → `official` → `known_user` → `anonymous` → `scrape`.
+  Anonymous is allowed but low-confidence and review-queued; contributors climb by registering, becoming
+  an area ambassador, or verifying as a venue operator.
+- **Apps are Sources with a key, not super-editors.** A consuming app (Plinkato, PianoMeetups) registers
+  as a `Source` with an API key. That makes it *accountable* (revocable if it misbehaves) and lets it
+  *attest to its own users' tiers* — but an observation's confidence reflects the **end user**, not the
+  app. A plink from an anonymous app user is still anonymous-tier. No app's word is gospel.
+- **Safeguards beyond confidence:** rate limits, spam detection, a review queue for low-trust
+  submissions, revocable sources/accounts, and ambassador/admin moderation.
+- **Transparency is the real safeguard.** Because every observation is attributed and visible in the
+  Explorer — source, actor role, method, confidence, timestamp, deep link — anyone can see *who* said
+  something and *how much it counts*. Open contribution is trustworthy precisely because it's paired
+  with total provenance visibility.
+
+Read is open to everyone; write is open too, but **weighted, transparent, and moderatable** — so "open"
+never means "anyone can overwrite the truth."
+
 ## Structure: two entities, one clean line
 
 To let the founders sustain the work *without* compromising the open data:
