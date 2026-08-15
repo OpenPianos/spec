@@ -113,6 +113,19 @@ The **data** is dedicated to the public domain under **[CC0 1.0](LICENSE)**. Att
 as a community norm, not a legal requirement. See [`LICENSE`](LICENSE) for the important note on
 OpenStreetMap/third-party sources that *cannot* be relicensed as CC0.
 
+## Origins & credits
+
+OpenPianos began with the vision and the *OpenPianos — Product & Technical Brief (v1)* by
+**Daniel Seixas** (PianoMeetups): the canonical-open-dataset thesis, the three pillars
+(dataset · API · contribution layer), the `status` model, the public API shape, and the
+open-exports-plus-mirror distribution — much of which this spec carries forward directly.
+
+This spec builds on that foundation and deepens the **data model**: provenance and the crosswalk,
+the event-sourced (append-only) log, facts-vs-derived confidence, and cross-source identity
+resolution.
+
+Co-founded by **Daniel Seixas** (PianoMeetups) and **JB** (Plinkato).
+
 ## Status
 
 Early and co-founded. This spec is a living draft meant to be argued with and improved via pull
