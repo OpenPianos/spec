@@ -38,6 +38,36 @@ confidence model in `SCHEMA.md`). It suppresses re-imports of the same spot from
 that doesn't out-rank it — but a genuinely different nearby piano, or a newer higher-tier
 positive report, is unaffected. Nothing is deleted; the piano is tombstoned and can revive.
 
+## Claiming & operator self-service
+
+The freshest, highest-trust data for a venue comes from **whoever operates it** — a library knows its
+practice-room hours, that a piano was removed, that a new grand arrived. So a verified operator can
+claim and maintain their own venue directly. Operator edits are just **high-confidence observations**
+(`actorRole: operator`) — authoritative for their venue, but still provenance-tagged, logged, and
+reversible; they never erase history or another source's attribution.
+
+**Claim → verify → manage:**
+
+1. **Claim** — the operator asserts they run venue *X*.
+2. **Verify ownership** (rising rigor): a link to an address at the venue's **official email domain**;
+   a **one-time code** to the venue's official phone / postal address; a **verification token** placed
+   on the venue's official website; or ambassador/admin review for edge cases.
+3. **Manage** — once verified, they update hours, booking URL, fees; add pianos; mark one removed (a
+   high-confidence `gone` observation). All written as `operator` observations against the `Venue` and
+   its `Piano`s.
+
+**Access surfaces** (an institution shouldn't have to join any one app to manage its own data):
+
+- **A neutral OpenPianos "venue portal"** — a small authenticated web form to claim + edit. The
+  primary, app-independent path.
+- **Any consuming app** may also surface a "claim your venue" flow and write via the contribution API.
+- **Direct API with a key** — for institutional operators with their own systems (a rail operator or
+  library network pushing an official list programmatically).
+
+**Safety:** verification gates the claim; every edit is a reversible, provenance-tagged observation; a
+false claim is revoked and its observations down-weighted. An operator contributes authoritative signal
+about *their own* venue — they cannot delete history or override another source's provenance.
+
 ## Importers (bulk sources)
 
 An importer maps each incoming record to an `Observation` keyed by `(sourceId, sourceRef)`:

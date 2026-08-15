@@ -67,6 +67,8 @@ observations by the resolution rules below; nothing here is authoritative on its
 | `countryCode` / `city` | string | Resolved from geocode. |
 | `accessType` | enum | `public` · `bookable` · `venue` · `private` |
 | `feeRequired` | bool | Free vs paid/bookable. |
+| `venueId` | string? | Optional — links this piano to a `Venue` when it lives inside one (see below). |
+| `roomName` | string? | Optional — e.g. "Large practice room". |
 | `indoor` | bool | |
 | `status` | enum | `active` · `temporary` · `needs_verification` · `removed` |
 | `description` | string | Optional, resolved. |
@@ -86,6 +88,30 @@ reference to the old blob then resolves to just one of the two (possibly the "wr
 identity system solves this perfectly (Wikidata has the same limitation). Splits are rare, logged,
 and announced in the `/changes` feed, and because observations are immutable they are always
 possible.
+
+### `Venue` — an optional grouping (rental studios & venues)
+
+Most pianos are standalone (a street piano) and have no venue. But a **rental studio, library practice
+room, or public venue** contains one or more pianos and carries shared context that doesn't belong on
+any single piano. So a `Venue` is an optional, first-class entity that *groups* pianos — the piano
+stays the atom; the venue wraps it only when needed.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | string (ULID) | Permanent (same redirect-on-merge rules as a piano). |
+| `name` | string | e.g. "Centrale Bibliotheek Den Haag". |
+| `latitude` / `longitude` | number | The venue/building location. |
+| `type` | enum | `library` · `music-school` · `hotel` · `rehearsal-studio` · `cultural-centre` · `other` |
+| `hours` | json | Opening / booking hours. |
+| `bookingUrl` | string? | Where to book or rent. |
+| `fees` | string? | e.g. "€3.50 / 60 min". |
+| `notes` | string? | |
+
+A `Piano` optionally belongs to **0..1** venue (`venueId`); a `Venue` has **1..N** pianos. A `Venue`
+is just **another observed canonical entity** — its own id, observations, resolution, and change-log
+entries (`entityType: venue`) — so hours/booking/fees are *resolved from observations* and stay fresh:
+a verified operator's update is a high-confidence observation (see the `operator` tier in §4 and the
+claim/verify/manage flow in `CONTRIBUTING.md`). Free street pianos ignore all of this.
 
 ---
 
@@ -137,7 +163,7 @@ observations assert existence; a `gone` observation is just a negative one.
 | `sourceRef` | string | **The source's own id / URL for this record** — the crosswalk key & deep link back. |
 | `kind` | enum | `sighting` · `submission` · `verification` · `gone` · `moved` · `photo` · `condition` · `access` · `import` |
 | `observedAt` | timestamp | When it was *observed* (not when ingested). |
-| `actorRole` | enum | `owner` · `ambassador` · `official` · `known_user` · `anonymous` · `scrape` |
+| `actorRole` | enum | `owner` · `operator` · `ambassador` · `official` · `known_user` · `anonymous` · `scrape` |
 | `actorId` | string? | Who (optional) — lets a consumer apply its own per-user trust. |
 | `presenceProven` | bool | A QR/geo-verified check-in — physical proof someone was there. |
 | `method` | enum | **`reported`** (source stated it directly) · **`inferred`** (a model derived it from prose/media). |
@@ -184,6 +210,7 @@ research consumer may down-weight every scrape; both are valid, because the fact
 | Observer (`actorRole`) | reference confidence | |
 |----------|-----------|---|
 | `owner` (a curator's own action) | 1.00 | ground truth |
+| `operator` (verified, for their **own** venue) | 0.95 | the venue itself — authoritative for its hours/pianos |
 | `ambassador`, in their area | 0.90 | vetted local steward |
 | `official` (rail, airport, city program) | 0.80 | curated, current |
 | `ambassador`, outside their area | 0.60 | trusted, not the steward there |
@@ -345,8 +372,9 @@ usual provenance facets. Feeds both `lastVerifiedAt` and the confidence resoluti
 
 ## 9. `ChangeLog` — append-only history
 
-Every mutation writes a change record: `entityType` (`piano`/`observation`/`photo`), `entityId`,
-`action` (`create`/`update`/`merge`/`distinct`/`status_change`/`remove`), `actor`, `createdAt`.
+Every mutation writes a change record: `entityType` (`piano`/`venue`/`observation`/`photo`),
+`entityId`, `action` (`create`/`update`/`merge`/`distinct`/`status_change`/`remove`), `actor`,
+`createdAt`.
 This powers the `/changes` sync feed, the Explorer's **date scrubber** (render the dataset *as of*
 any date), and public trust (anyone can audit how a record evolved).
 
