@@ -1,0 +1,45 @@
+OpenPianos data license
+========================
+
+The OpenPianos dataset is dedicated to the public domain under
+
+    Creative Commons Zero v1.0 Universal (CC0 1.0)
+    Full legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+To the extent possible under law, the OpenPianos contributors have waived all
+copyright and related or neighboring rights to the OpenPianos dataset. You may
+copy, modify, distribute, and use it, including for commercial purposes, without
+asking permission.
+
+
+Attribution (a request, not a requirement)
+------------------------------------------
+
+CC0 waives the legal requirement to attribute. We nonetheless *ask* that reusers
+credit "OpenPianos" with a link, as a community norm — the same way Wikidata does.
+It costs you nothing and helps the commons grow.
+
+
+IMPORTANT — third-party source data
+-----------------------------------
+
+OpenPianos aggregates from multiple sources. Some sources carry their own licenses
+that OpenPianos CANNOT override:
+
+- OpenStreetMap data is licensed ODbL and MAY NOT be relicensed as CC0. OSM is
+  therefore used only as a LEAD for verification/discovery, or kept in a clearly
+  separated, ODbL-attributed layer — never mixed into the CC0 core.
+- pianos.pub and other partner data are included only with the source's explicit
+  permission to redistribute under these terms.
+
+Every record's provenance (its `Source` and license) is preserved in the data, so
+reusers can always see what may be redistributed and under which terms. When in
+doubt about a specific record, check its source's license before redistributing.
+
+
+Code
+----
+
+Software in the OpenPianos repositories (the `api`, `explorer`, etc.) is licensed
+separately under MIT unless a repository states otherwise. This file covers the
+DATA.
