@@ -9,8 +9,12 @@ trustworthy, neutral, and useful even if any one person or app disappears.
    Plinkato and PianoMeetups are **consumers** of OpenPianos, exactly like everyone else — neither
    owns it. This neutrality is what lets independent sources (pianos.pub, OSM, rail operators)
    contribute without feeding a competitor.
-2. **Stable identifiers.** Every piano gets a permanent `id` that never changes, so many apps can
-   reference the same piano consistently.
+2. **Stable identifiers.** Every canonical piano gets a permanent, opaque `id`. Ids are never
+   reused and never deleted; when two pianos merge, the retired id **redirects** to the survivor —
+   so any reference an app stored keeps resolving forever and never silently points to a *different*
+   piano. The id names the canonical *record*, not the physical piano, so its stability is a
+   guarantee we enforce (mint-once · no-reuse · redirect-on-merge), not a fact of nature. Splits
+   (undoing a bad merge) are rare, logged, and surfaced in the change feed.
 3. **Data preservation.** Nothing is ever physically deleted. Pianos change `status`
    (`active` / `temporary` / `needs_verification` / `removed`) and the full history is kept.
 4. **Provenance & transparency.** Every fact is an attributed observation; every change is logged.

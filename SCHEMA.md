@@ -61,7 +61,7 @@ observations by the resolution rules below; nothing here is authoritative on its
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `id` | string (ULID) | **Permanent. Never changes.** The stable reference every app shares. |
+| `id` | string (ULID) | **Permanent, opaque, never reused.** On merge it redirects to the survivor rather than dying, so stored references resolve forever (see below). |
 | `name` | string | Resolved. |
 | `latitude` / `longitude` | number | Resolved. |
 | `countryCode` / `city` | string | Resolved from geocode. |
@@ -72,10 +72,20 @@ observations by the resolution rules below; nothing here is authoritative on its
 | `description` | string | Optional, resolved. |
 | `createdAt` / `updatedAt` / `lastVerifiedAt` | timestamp | |
 
-**Merge = re-parenting observations.** When two canonical pianos are found to be the same
-physical piano, all observations of the loser are re-pointed to the survivor and the loser is
-tombstoned (`status: removed`, with a redirect). No observation is destroyed, so a merge is
-fully reversible and can never lose a source's data.
+**Merge = re-parenting observations, and the id redirects (it never dies).** When two canonical
+pianos are found to be the same physical piano, all observations of the loser are re-pointed to the
+survivor and the loser's **id becomes a permanent redirect** to the survivor — never reused, never
+deleted — so any reference an app stored still resolves. No observation is destroyed, so a merge is
+fully reversible and can never lose a source's data. Because the id names the canonical *record*,
+not the physical piano, its stability is a promise we enforce (mint-once · no-reuse ·
+redirect-on-merge), not an intrinsic property.
+
+**Split = the reverse, and the one honest imperfection.** Undoing a bad merge re-groups the
+observations into two canonicals: one keeps the id, the split-off piece is minted a new id. A
+reference to the old blob then resolves to just one of the two (possibly the "wrong" one) — no
+identity system solves this perfectly (Wikidata has the same limitation). Splits are rare, logged,
+and announced in the `/changes` feed, and because observations are immutable they are always
+possible.
 
 ---
 
