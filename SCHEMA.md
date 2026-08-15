@@ -71,8 +71,17 @@ observations by the resolution rules below; nothing here is authoritative on its
 | `roomName` | string? | Optional — e.g. "Large practice room". |
 | `indoor` | bool | |
 | `status` | enum | `active` · `temporary` · `needs_verification` · `removed` |
+| `activeFrom` | timestamp? | Temporary/seasonal pianos: when it appears. |
+| `activeUntil` | timestamp? | Temporary/seasonal pianos: when it's removed; after this, status auto-transitions to `removed`. |
 | `description` | string | Optional, resolved. |
 | `createdAt` / `updatedAt` / `lastVerifiedAt` | timestamp | |
+
+**Temporary & seasonal pianos.** A `temporary` piano carries `activeFrom` / `activeUntil`. Consumers can
+query "up right now" or "this summer," and the system retires it *on schedule* (`active` → `removed`
+after `activeUntil`) instead of waiting weeks for a "gone" sighting — history kept, per the append-only
+rule. **Recurrence is deliberately not modeled** (too messy, and premature): a festival that returns each
+year is simply **re-added as a new temporary piano each period** — which matches reality, since these
+installations usually move locations anyway. Full recurrence rules can come later if ever needed.
 
 **Merge = re-parenting observations, and the id redirects (it never dies).** When two canonical
 pianos are found to be the same physical piano, all observations of the loser are re-pointed to the
