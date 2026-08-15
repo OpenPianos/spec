@@ -95,8 +95,14 @@ identity, owned by no one. So one canonical piano can carry observations from ma
 a pianos.pub import *and* a Plinkato user's comment *and* an NS listing — and that's the whole point
 of the union: the piano gets richer and fresher because many apps contribute to one identity.
 
-- **"View by source" filters *observations*, not pianos.** A piano appears in every source's view
-  where it has ≥1 observation. A piano touched by pianos.pub and Plinkato shows in both.
+- **"View by source" filters *observations*, not pianos** — and there are two distinct senses:
+  - **Coverage**: "which pianos has source X observed" (the piano appears if it has ≥1 X observation).
+  - **Faithful projection**: "the dataset *as X provides it*" = resolve the canonical using **only X's
+    observations.** A Plinkato comment is a `plinkato` observation, so it enriches the *union* view and
+    the *plinkato* view but is **absent from the pianos.pub projection** — that projection faithfully
+    reconstructs what pianos.pub itself holds, never silently polluted by another source. The canonical
+    is a projection; you can project it through any source filter (one source, the union, or any blend)
+    from the same event log.
 - Useful per-source labels are *derived*, never ownership: **discovered-by** (source of the earliest
   observation), **contributing-sources** (the set), **freshest-per-source**.
 - **Provenance is sticky — no laundering, no loops.** A source only ever writes observations it
