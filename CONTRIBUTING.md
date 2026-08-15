@@ -55,6 +55,39 @@ higher-trust human observation with a scraped one.
 Contribute a **deep link**, never an image file. A photo is an `Observation` of kind `photo`
 with a `url` into the hosting app/post (see `SCHEMA.md`). The canonical stays media-free.
 
+## Why facts, not prose (and links, not media)
+
+OpenPianos stores *structured facts* extracted from comments — never the raw comment text — and
+*deep links* to photos — never the image bytes. This isn't only about tidiness; it's deliberate,
+and it holds **even when we have the source's permission to ingest**. Reasons, strongest first:
+
+1. **Platform permission ≠ author permission.** Facts (*"out of tune", "ask reception for the key"*)
+   are not copyrightable, so we can store them freely. But the *words* of a comment are the
+   **author's** copyrighted expression — and a source granting us its *database* can't necessarily
+   sublicense every commenter's prose for **CC0 republication**. Extracting facts removes the
+   author's expression entirely, so there is no author copyright to clear.
+
+2. **Privacy, and CC0 is irrevocable.** Comments contain names and personal detail. Publishing raw
+   prose into an open, public-domain, **un-retractable** dataset would republish that PII globally,
+   forever, with no way to take it back. Structured facts carry no personal content.
+
+3. **Quality & scope.** We want piano *signal*, not a comment section — no ads, spam, abuse, or
+   off-topic chatter. Extraction is the filter.
+
+4. **Portability & reach.** Typed facts keep the dataset a small, queryable, single-file export;
+   they also normalise across languages (a Dutch or Japanese comment becomes the same structured
+   signal a keyword matcher never could).
+
+5. **It's what data exchanges cover.** Partner agreements (e.g. pianos.pub) are scoped to *data*,
+   not the verbatim republication of users' prose.
+
+**Bulk ingestion still requires the source's permission/license** for the *database* itself (in the
+EU, the sui-generis database right applies even to uncopyrightable facts) — but that is a separate
+question from storing users' *words*, which we never do. Every observation records its `Source` and
+that source's `license`, so what may be redistributed is always inspectable. When adding a new
+source, confirm its license/permission first (see `LICENSE`), and — for an authoritative public
+dataset — have per-source ingestion reviewed by counsel before scaling.
+
 ## Making changes to the spec itself
 
 The data model, governance, and license live in this repo. Propose changes as pull requests so
