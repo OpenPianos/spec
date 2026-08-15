@@ -339,6 +339,39 @@ The model's job is not to auto-decide the hard cases. It is to **preserve the ev
 decision — human or algorithmic — is made on real provenance (names, photos, sources), not
 flattened coordinates, and can always be undone.
 
+### Resolving structural conflicts (merge vs. split vs. delete, across sources)
+
+Attribute conflicts (name, hours) are resolved by §4. **Structural conflicts are harder** — but they
+use the *same* machinery: `merge`, `split`, `distinct`, and `delete` are themselves
+**confidence-weighted assertions** in the log (actor · tier · timestamp), and the current identity
+graph is the highest-confidence-consistent resolution of them.
+
+- **A weak merge is overturned by a stronger `distinct`.** Plinkato anonymous merges A+B (0.25); an
+  ambassador asserts `distinct(A,B)` (0.90) → they stay separate; the merge is retained but out-voted.
+- **A strong merge holds against a weak delete.** An ambassador merges A+B (0.90); a scrape deletes A
+  (0.20) → the merge holds, and "A is gone" becomes a *weak `gone` observation on the merged canonical*,
+  out-voted by B's fresh "present" signals.
+
+**The partial-delete case (merge A+B, then a source deletes only A).** Once merged, A's identity *is*
+the canonical C, so "delete A" resolves to a `gone` observation *on C*, weighed against B's
+present-signals:
+- If B is clearly alive → the delete loses (the piano is still there; that source had stale info about "A").
+- If the delete carries evidence that A ≠ B (different coords/name — a `distinct` signal) → that's
+  evidence the **merge was wrong**. If it out-ranks the merge, the system **splits C back** into A
+  (gone) and B (alive). A conflicting delete is thus a *signal to re-examine the merge*, not a
+  contradiction to swallow.
+
+**Contested ties get a human, not a silent guess.** When two structural assertions are near-equal
+confidence (an ambassador merged; a *different* ambassador says distinct), the identity is flagged
+**`contested` / `needs_verification`** and surfaced for a trusted actor (ambassador/admin) to adjudicate
+in the Explorer. Their decision is a high-confidence, **sticky** assertion (like `pinned-distinct`) that
+settles it. OpenPianos takes a stance where it can be confident and escalates where it can't — it never
+fakes certainty on a genuinely ambiguous identity.
+
+Because every assertion is immutable and logged, **any structural decision is reversible**, and the
+*raw* assertions are always published alongside the resolved canonical (§7) — so a consumer that weighs
+sources differently can re-derive its own identity graph.
+
 ---
 
 ## 7. Published views — canonical vs. raw
