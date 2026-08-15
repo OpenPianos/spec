@@ -145,6 +145,14 @@ observations assert existence; a `gone` observation is just a negative one.
 | `lat` / `lon` | number | Where the source placed it (may differ from the canonical). |
 | `payload` | json | Kind-specific detail (name, note, url, availability, condition score…). |
 
+**No `comment` / `caption` kind — by design.** Comments and captions are raw *inputs*, not
+observation kinds: the canonical never stores prose (author copyright · PII · CC0-irrevocability ·
+spam — see `CONTRIBUTING.md`). A comment is **decomposed into** one or more *typed* observations
+(`verification`, `gone`, `condition`, `access`, …), each `method: inferred` with `derivedBy: {model}`
+and `sourceRef` = the comment (a deep link back). Its value is its *facts*, not its wording — so a
+comment that yields no facts yields **no** observations (chatter self-filters). By contrast `photo`
+*is* a kind: a photo observation is just a deep link — no prose, and the reference is itself useful.
+
 > **`(sourceId, sourceRef)` is unique and immutable.** It is the internal crosswalk. Re-import is
 > deterministic: an incoming record whose `(sourceId, sourceRef)` already maps to a canonical
 > updates *that* observation; if the canonical was merged or removed, the mapping is honored
