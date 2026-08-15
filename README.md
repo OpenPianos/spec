@@ -105,6 +105,7 @@ future community initiatives. None of them owns the data. That's the point.
 - [`SCHEMA.md`](SCHEMA.md) — the full data model: pianos, sources, observations, confidence, clustering, photos, changes
 - [`GOVERNANCE.md`](GOVERNANCE.md) — community ownership, neutrality, the non-profit + apps structure
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how data gets in, verified, and retired
+- [`SOURCES.md`](SOURCES.md) — the source registry: what to ingest, with license + access per source
 - [`DECISIONS.md`](DECISIONS.md) — the decision log (why CC0; hosting; DB engine; venue modeling)
 - [`LICENSE`](LICENSE) — CC0, plus the third-party (OSM / pianos.pub) notes
 
