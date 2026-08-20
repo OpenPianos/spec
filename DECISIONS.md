@@ -49,6 +49,34 @@ might outweigh the downstream friction. Until then, CC0 wins on reach.
 
 ---
 
+## ADR-0005 — Simplify: wiki + ambassadors instead of the event-sourced observation model
+
+**Status:** Accepted (JB + Daniel call, 19 Aug 2026).
+
+**Context.** The first spec revision modeled every fact as an immutable, source-attributed
+observation with derived confidence resolution. Technically sound, but heavy: hard to read, hard
+to explain to contributors, and more machinery than a young project needs.
+
+**Decision.** OpenPianos works like Wikipedia. Anyone with an account edits piano records
+directly; every record keeps a full attributed revision history; nothing is deleted.
+**Ambassadors** (of a piano, a venue, a city, a state, or a country) review, verify, and correct
+within their scope. Freshness is a first-class, human-readable signal (`lastVerifiedAt` + who),
+not a computed confidence number. The first product is a simple website: sign up, add a piano,
+edit, verify it's still there.
+
+**What survives from the earlier model.** CC0; stable ids with redirect-on-merge; nothing ever
+deleted; every change attributed; imports keyed to their source so re-syncs update instead of
+duplicate and respect hand-curation; links-not-media; facts-not-prose.
+
+**Consequences.** The apps carry the social layer (Plinkato: profiles, passports, plinks,
+streams) and use OpenPianos as their piano source, feeding verifications back. The event-sourced
+design remains in git history and can be revisited if scale or abuse ever demands it.
+
+**Revisit if.** Vandalism or conflicting-source volume outgrows what revision history plus
+ambassador review can handle.
+
+---
+
 ## Open / upcoming decisions
 
 To be recorded here as they're settled (several were discussed but not yet ratified):

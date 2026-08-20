@@ -1,433 +1,69 @@
-# OpenPianos — Data Model
+# OpenPianos — Data model
 
-The model has **three layers**, and one organizing principle. Getting these right is the whole
-design: it's what lets many sources contribute to one piano without fighting, what makes merges
-and deletes survive re-imports, and what turns "stale data" into "data you can trust because you
-can see where every fact came from and how fresh it is."
+Plain-language draft of the simplified model (see `DECISIONS.md` ADR-0005; the earlier
+event-sourced design is in git history). Field lists are a starting point for the first website,
+not a contract; expect this to move while we build.
 
-```
-  Observations   →  the raw, immutable record of "what a source said, and when"
-  Canonical piano →  a stable identity resolved from its observations
-  Change log      →  the append-only history of everything that happened
-```
+## Piano
 
-**A piano is not a row you edit.** It is a stable identity floating on a pile of immutable
-observations. "Name", "status", "last verified" are *resolved* from those observations, never
-overwritten.
+The atom of the dataset. One record per physical piano.
 
-### It's an append-only event log — think git
-
-Every observation (and every merge/distinct decision) is an **immutable event that lives
-forever.** Nothing is ever edited or deleted; new information is always a new event. This is
-event-sourcing, and the git analogy is nearly 1:1:
-
-| git | OpenPianos |
+| Field | Meaning |
 |---|---|
-| commit (immutable) | observation / assertion |
-| commit history | the change log |
-| **merge commit** (references, never rewrites history) | a merge assertion |
-| working tree (a projection of HEAD) | the canonical `Piano` |
-| `git checkout <date>` | the Explorer's date scrubber |
-| `git revert` (a new commit) | undoing a bad merge (a new assertion) |
-| rebuild the tree from the object graph | rebuild the canonical DB by replaying events |
+| `id` | Permanent opaque id. Never reused; redirects if merged. |
+| `name` | Display name ("St Pancras station piano"). |
+| `lat`, `lon` | Location. |
+| `address`, `city`, `region`, `country` | Human-readable place. |
+| `venue` | Optional link to a Venue (see below). |
+| `access` | `public` (walk up and play) · `bookable` (studio/practice room) · `ask` (venue piano, ask staff). |
+| `hours` | When it's playable, free text for now. |
+| `status` | `active` · `temporary` (with `activeFrom`/`activeUntil`) · `needs_verification` · `removed`. |
+| `instrument` | Optional: type/brand ("upright, Yamaha"). |
+| `notes` | Short practical facts ("out of tune", "key at reception"). |
+| `links` | External links: photos, source pages, videos. Links only, never media files. |
+| `lastVerifiedAt` / `lastVerifiedBy` | The freshness signal: when someone last confirmed it, and who. |
+| `sources` | Where the record came from (e.g. `pianos.pub:84d11559`), so imports update instead of duplicate. |
 
-Two consequences that define the whole system:
+## Revision history
 
-- **There is no destructive merge of pianos** — only *accumulating events* and *merging
-  information* in the derived view. Even piano-membership (which observations form which canonical
-  piano) is expressed as immutable `attach` / `merge` / `distinct` assertions and **derived by
-  replay** — never a mutable field you rewrite.
-- **The relational tables below (`Piano`, etc.) are a materialized projection** — a cache, like
-  git's checked-out working tree — kept current as events arrive and **fully rebuildable from the
-  event log at any time.** Events are the source of truth; the query tables are a read model. This
-  is precisely why the exports, the `/changes` feed, and the GitHub mirror all fall out naturally:
-  the whole database is a log you can snapshot and replay.
+Every change to a piano is a revision: who, when, what changed, optional note. Records are edited
+in place (wiki-style), but no information is lost, because the full revision chain is kept and any
+revision can be reverted. `removed` pianos keep their page and history.
 
-**The organizing principle for third-party content:**
+## Verification
 
-> The canonical never holds raw third-party **media or prose**. It holds **structured,
-> redistributable signal + a deep link back to the source** for the rest.
+A small record attached to a piano: who verified, when, the verdict (`present` / `gone`), and how
+(`in_person`, `qr_scan`, `photo`, `phone`, `operator`). The newest verification drives
+`lastVerifiedAt` and the freshness shown on maps. Consuming apps write these too: a Plinkato
+"plink" (a QR-verified visit) arrives as a `present` verification.
 
-Photos → a deep link. Comments → model-extracted structured signal + a deep link. Same rule.
-This keeps the dataset legally clean, portable (no blobs/prose bloating the file), and
-high-signal.
+## Account
 
----
-
-## 1. `Piano` — the canonical entity
-
-The resolved, public view of one real-world piano. Its scalar fields are *computed* from its
-observations by the resolution rules below; nothing here is authoritative on its own.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | string (ULID) | **Permanent, opaque, never reused.** On merge it redirects to the survivor rather than dying, so stored references resolve forever (see below). |
-| `name` | string | Resolved. |
-| `latitude` / `longitude` | number | Resolved. |
-| `countryCode` / `city` | string | Resolved from geocode. |
-| `accessType` | enum | `public` · `bookable` · `venue` · `private` |
-| `feeRequired` | bool | Free vs paid/bookable. |
-| `venueId` | string? | Optional — links this piano to a `Venue` when it lives inside one (see below). |
-| `roomName` | string? | Optional — e.g. "Large practice room". |
-| `indoor` | bool | |
-| `status` | enum | `active` · `temporary` · `needs_verification` · `removed` |
-| `activeFrom` | timestamp? | Temporary/seasonal pianos: when it appears. |
-| `activeUntil` | timestamp? | Temporary/seasonal pianos: when it's removed; after this, status auto-transitions to `removed`. |
-| `description` | string | Optional, resolved. |
-| `createdAt` / `updatedAt` / `lastVerifiedAt` | timestamp | |
-
-**Temporary & seasonal pianos.** A `temporary` piano carries `activeFrom` / `activeUntil`. Consumers can
-query "up right now" or "this summer," and the system retires it *on schedule* (`active` → `removed`
-after `activeUntil`) instead of waiting weeks for a "gone" sighting — history kept, per the append-only
-rule. **Recurrence is deliberately not modeled** (too messy, and premature): a festival that returns each
-year is simply **re-added as a new temporary piano each period** — which matches reality, since these
-installations usually move locations anyway. Full recurrence rules can come later if ever needed.
-
-**Merge = re-parenting observations, and the id redirects (it never dies).** When two canonical
-pianos are found to be the same physical piano, all observations of the loser are re-pointed to the
-survivor and the loser's **id becomes a permanent redirect** to the survivor — never reused, never
-deleted — so any reference an app stored still resolves. No observation is destroyed, so a merge is
-fully reversible and can never lose a source's data. Because the id names the canonical *record*,
-not the physical piano, its stability is a promise we enforce (mint-once · no-reuse ·
-redirect-on-merge), not an intrinsic property.
-
-**Split = the reverse, and the one honest imperfection.** Undoing a bad merge re-groups the
-observations into two canonicals: one keeps the id, the split-off piece is minted a new id. A
-reference to the old blob then resolves to just one of the two (possibly the "wrong" one) — no
-identity system solves this perfectly (Wikidata has the same limitation). Splits are rare, logged,
-and announced in the `/changes` feed, and because observations are immutable they are always
-possible.
-
-### `Venue` — an optional grouping (rental studios & venues)
-
-Most pianos are standalone (a street piano) and have no venue. But a **rental studio, library practice
-room, or public venue** contains one or more pianos and carries shared context that doesn't belong on
-any single piano. So a `Venue` is an optional, first-class entity that *groups* pianos — the piano
-stays the atom; the venue wraps it only when needed.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | string (ULID) | Permanent (same redirect-on-merge rules as a piano). |
-| `name` | string | e.g. "Centrale Bibliotheek Den Haag". |
-| `latitude` / `longitude` | number | The venue/building location. |
-| `type` | enum | `library` · `music-school` · `hotel` · `rehearsal-studio` · `cultural-centre` · `other` |
-| `hours` | json | Opening / booking hours. |
-| `bookingUrl` | string? | Where to book or rent. |
-| `fees` | string? | e.g. "€3.50 / 60 min". |
-| `notes` | string? | |
-
-A `Piano` optionally belongs to **0..1** venue (`venueId`); a `Venue` has **1..N** pianos. A `Venue`
-is just **another observed canonical entity** — its own id, observations, resolution, and change-log
-entries (`entityType: venue`) — so hours/booking/fees are *resolved from observations* and stay fresh:
-a verified operator's update is a high-confidence observation (see the `operator` tier in §4 and the
-claim/verify/manage flow in `CONTRIBUTING.md`). Free street pianos ignore all of this.
-
----
-
-## 2. `Source`
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | string | e.g. `pianospub`, `osm`, `ns`, `sncf`, `plinkato`, `pianomeetups` |
-| `name` | string | Human label. |
-| `kind` | enum | `aggregator` · `transit-operator` · `official-program` · `app` · `scrape` · `editorial` |
-| `license` | string | The source's own license (drives what may be redistributed). |
-
-### A source contributes observations; it doesn't own pianos
-
-A piano has **no single source.** Each *observation* has a source; the piano is the shared canonical
-identity, owned by no one. So one canonical piano can carry observations from many sources at once —
-a pianos.pub import *and* a Plinkato user's comment *and* an NS listing — and that's the whole point
-of the union: the piano gets richer and fresher because many apps contribute to one identity.
-
-- **"View by source" filters *observations*, not pianos** — and there are two distinct senses:
-  - **Coverage**: "which pianos has source X observed" (the piano appears if it has ≥1 X observation).
-  - **Faithful projection**: "the dataset *as X provides it*" = resolve the canonical using **only X's
-    observations.** A Plinkato comment is a `plinkato` observation, so it enriches the *union* view and
-    the *plinkato* view but is **absent from the pianos.pub projection** — that projection faithfully
-    reconstructs what pianos.pub itself holds, never silently polluted by another source. The canonical
-    is a projection; you can project it through any source filter (one source, the union, or any blend)
-    from the same event log.
-- Useful per-source labels are *derived*, never ownership: **discovered-by** (source of the earliest
-  observation), **contributing-sources** (the set), **freshest-per-source**.
-- **Provenance is sticky — no laundering, no loops.** A source only ever writes observations it
-  *originated*, tagged with its own id + deep link; it never re-attributes an observation it merely
-  *consumed*. So a Plinkato comment is forever `(plinkato, …)` and the pianos.pub sighting is forever
-  `(pianospub, …)` — distinct `(sourceId, sourceRef)` keys, no double-counting, no feedback loop when
-  data round-trips through consuming apps.
-
----
-
-## 3. `Observation` — the atom of truth (provenance = the crosswalk)
-
-This is the layer most projects skip, and the reason their data rots. **Every fact about a piano
-is an observation tied to the source it came from, and to *how* we came to know it.** Positive
-observations assert existence; a `gone` observation is just a negative one.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | string | |
-| `pianoId` | string | The canonical piano it currently attaches to. |
-| `sourceId` | string | Which `Source`. |
-| `sourceRef` | string | **The source's own id / URL for this record** — the crosswalk key & deep link back. |
-| `kind` | enum | `sighting` · `submission` · `verification` · `gone` · `moved` · `photo` · `condition` · `access` · `import` |
-| `observedAt` | timestamp | When it was *observed* (not when ingested). |
-| `actorRole` | enum | `owner` · `operator` · `ambassador` · `official` · `known_user` · `anonymous` · `scrape` |
-| `actorId` | string? | Who (optional) — lets a consumer apply its own per-user trust. |
-| `presenceProven` | bool | A QR/geo-verified check-in — physical proof someone was there. |
-| `method` | enum | **`reported`** (source stated it directly) · **`inferred`** (a model derived it from prose/media). |
-| `derivedBy` | object? | When `inferred`: `{ model, version }` — so it's reproducible and re-extractable later. |
-| `lat` / `lon` | number | Where the source placed it (may differ from the canonical). |
-| `payload` | json | Kind-specific detail (name, note, url, availability, condition score…). |
-
-**No `comment` / `caption` kind — by design.** Comments and captions are raw *inputs*, not
-observation kinds: the canonical never stores prose (author copyright · PII · CC0-irrevocability ·
-spam — see `CONTRIBUTING.md`). A comment is **decomposed into** one or more *typed* observations
-(`verification`, `gone`, `condition`, `access`, …), each `method: inferred` with `derivedBy: {model}`
-and `sourceRef` = the comment (a deep link back). Its value is its *facts*, not its wording — so a
-comment that yields no facts yields **no** observations (chatter self-filters). By contrast `photo`
-*is* a kind: a photo observation is just a deep link — no prose, and the reference is itself useful.
-
-> **`(sourceId, sourceRef)` is unique and immutable.** It is the internal crosswalk. Re-import is
-> deterministic: an incoming record whose `(sourceId, sourceRef)` already maps to a canonical
-> updates *that* observation; if the canonical was merged or removed, the mapping is honored
-> (fold into the survivor, or stay retired) — **so hand-curation survives every re-sync.**
-> pianos.pub already does this internally (its sightings keep an `originalExternalId`); OpenPianos
-> makes it a first-class, cross-source layer.
-
-Everything above is an **objective fact.** Note especially `actorRole`, `presenceProven`, and
-`method`: they record *who* observed, whether presence was *proven*, and whether a human
-*reported* it or a model *inferred* it. None of that is an opinion. The opinion — how much to
-*trust* each — lives in the next section, deliberately kept separate.
-
----
-
-## 4. Facts vs. confidence (the number is derived, not stored)
-
-**Confidence is not intrinsic to the data.** It is a *policy* — an opinion about how much to trust
-each origin — and different consumers can legitimately disagree. What's intrinsic is the
-**provenance** (§3). Confidence is a **transparent, versioned *function* of those facts** that
-OpenPianos publishes as a **default reference**, so there is a shared canonical answer — but any
-consumer may recompute it with their own weights, because they have the raw facts.
-
-So `confidence` appears in the API/exports as a **derived reference score**, clearly labelled as
-such — never an opaque number someone typed in. Plinkato may trust its own signed-in users more; a
-research consumer may down-weight every scrape; both are valid, because the facts are all present.
-
-### The reference trust ladder (OpenPianos' default weighting)
-
-| Observer (`actorRole`) | reference confidence | |
-|----------|-----------|---|
-| `owner` (a curator's own action) | 1.00 | ground truth |
-| `operator` (verified, for their **own** venue) | 0.95 | the venue itself — authoritative for its hours/pianos |
-| `ambassador`, in their area | 0.90 | vetted local steward |
-| `official` (rail, airport, city program) | 0.80 | curated, current |
-| `ambassador`, outside their area | 0.60 | trusted, not the steward there |
-| `known_user` (history / karma) | 0.50 | a real contributor |
-| `anonymous` / brand-new | 0.25 | an unverified claim |
-| `scrape` (social sighting) | 0.20 | + decays with age |
-
-Modifiers, also derived from facts:
-- **`presenceProven: true`** → strong boost for "still here", regardless of who.
-- **`method: inferred`** → a discount (model uncertainty stacks on top of the observer's own tier).
-- **Recency** → effective weight ≈ `confidence × recency`. A 2019 scrape loses to a year-old
-  ambassador report; a fresh official listing beats a stale delete.
-
-> The "Joris = 1.0" case dissolves: nothing hard-codes the founder. It falls out of
-> `actorRole: owner` under the reference model. Another consumer could weight `owner` differently —
-> the *fact* ("owner did this") stays true regardless.
-
-### Resolution rule — precedence, not sum
-
-> **A lower tier never overrides a *recent* higher-tier observation.**
-
-An owner's "gone" can't be undone by an anonymous "still here" or an old scrape — only by an
-equal/higher tier reporting something newer. Lower tiers decide existence only where no recent
-authoritative observation exists.
-
-### Removal is a spatial + confidence claim, not a per-source flag
-
-A deletion is a **negative observation at a location** (small radius, ~40 m) carrying its
-observer's tier. On import from *any* source, a candidate piano in that radius is suppressed only
-if the tombstone **out-ranks** it (higher tier, or equal tier + newer). A fresh official listing
-can still revive a spot; a random scrape cannot — while a genuinely different piano 150 m away is
-untouched.
-
----
-
-## 5. Deriving signal from prose & media (comments, captions, photos)
-
-Third-party **prose and media never enter the canonical raw.** They enter as (a) a deep-link
-reference and/or (b) **model-derived structured observations** (`method: inferred`).
-
-### Photos → a deep-link event
-
-A photo is an observation of kind `photo` that *references* where the image lives. No bytes stored.
-
-| Field | Notes |
-|-------|------|
-| `url` | **deep link** into the source (app screen or original post) |
-| `thumbnailUrl?` | optional, *source-hosted* thumbnail — still not ours |
-| `observedAt` | doubles as a freshness signal |
-
-Face redaction never applies to the canonical (we don't host); it's a *consuming app's* concern.
-
-### Comments → model-extracted structured observations
-
-A free-text comment is read by a cheap model and emitted as **zero or more** structured
-observations (`method: inferred`, `derivedBy: {model, version}`), with `sourceRef` = the comment
-id (the deep link back). **The prose itself is never stored.**
-
-| A comment saying… | → observation |
+| Field | Meaning |
 |---|---|
-| "it's gone / removed / not there anymore" | `verification: gone` |
-| "played it today, lovely" | `verification: present` |
-| "badly out of tune, sticky keys" | `condition` (score) |
-| "ask reception for the key, locked after 6pm" | `access` (note) |
-| "beautiful Yamaha grand" | `kind` + `brand` |
-| "it's actually on the other side of the square" | `moved` → **mislocation flag, never auto-moves** |
+| `id`, `name`, `email` | The basics. |
+| `role` | `contributor` (default) · `ambassador` · `admin`. |
+| `ambassadorScopes` | For ambassadors: what they steward — a piano id, a venue id, a city, a state, or a country. One account can hold several scopes. |
 
-Multilingual falls out for free (the model reads Dutch/Japanese comments a keyword matcher never
-could). Storing `derivedBy` means a better model can **re-extract** every signal later — without
-OpenPianos ever having stored the prose.
+Consuming apps (Plinkato, PianoMeetups) get API credentials and pass through which of their users
+made each edit, so attribution stays about people, not apps.
 
-### Safety rule for inferred signal
+## Venue (optional grouping)
 
-> **A `method: inferred` signal from a low-trust source never auto-acts.**
+For places that host several pianos or bookable rooms: a station, a library, a piano studio.
+Carries the venue-level facts (name, location, website, opening hours, operator contact) so its
+pianos don't repeat them. A venue operator who verifies a claim maintains this record and its
+pianos.
 
-An anonymous comment a model reads as "gone" is a *weak negative observation* that contributes to
-resolution — it does **not** unilaterally remove a piano. Prose is treacherous (*"this piano is
-dead, so out of tune"* is a **condition** complaint, not a removal). The precedence rule + the
-`inferred` discount are what keep extraction useful *and* safe.
+## Exports & API
 
-### pianos.pub, mapped
+- Open exports: GeoJSON, CSV, JSON, refreshed on every change or on a schedule.
+- A read API for maps and apps, and a write API for edits and verifications from consuming apps.
+- A change feed (what changed since X) so consumers can sync instead of re-downloading.
 
-Proof the model absorbs pianos.pub **losslessly** while sanitizing it:
+## Deliberately not modeled (yet)
 
-| pianos.pub | → OpenPianos observation |
-|---|---|
-| **sighting** (`sourceUrl`, `observedAt`) | `sighting`, `url` = deep link, `actorRole: scrape`, `method: reported` |
-| **availabilityReport** (`available` + date) | `verification: present/gone`, `method: reported` |
-| **comment** (prose) | model → 0+ structured obs, `method: inferred`; **prose stays at pianos.pub** |
-
-Each keeps `sourceRef` = pianos.pub's own id (`originalExternalId` / comment id) — the crosswalk
-*and* the link back.
-
----
-
-## 6. Identity resolution — "a piano at X and another very close at Y"
-
-The hard problem. **Proximity is a signal, never an automatic decision.** Distance is ambiguous in
-*both* directions: geotag drift can place the *same* piano hundreds of metres apart, while *real
-distinct* pianos sit 100–270 m apart. So you cannot threshold your way to truth.
-
-1. **Observations stay separate and immutable, whatever the outcome.** "Piano at X (source A)" and
-   "piano at Y (source B)" are two observations with their own coords. Nothing is lost; every
-   decision is reversible.
-2. **Proximity makes them *candidates*, not a merge:**
-   - **Tight distance + agreeing evidence** (same name/venue/lineage) → auto-cluster into one canonical.
-   - **Fuzzy distance, or conflicting evidence** (names disagree) → **keep them as two canonicals and
-     flag `needs_verification`.** Do *not* auto-merge. (This single rule prevents the Den Haag
-     over-merge.)
-3. **The decision is a confidence-weighted, logged action.** An ambassador/owner "these are the
-   same" is authoritative and sticky; an importer's proximity guess is low-confidence and reversible.
-4. **Store *both* settled calls.** A **merge redirect** *and* a **pinned-distinct assertion**
-   (`distinct(P1, P2)`), so the clusterer never re-litigates a decision a human already made.
-
-```
-obs1: lat=X  name="Venestraat"    source=pianospub
-obs2: lat=Y  name="Prinsegracht"  source=osm
-clusterer: distance 180 m (fuzzy), names disagree → DO NOT auto-merge
-  → piano P1 {obs1}, piano P2 {obs2}, both needs_verification
-ambassador reads the provenance, decides distinct
-  → writes distinct(P1,P2)  (logged, sticky)
-next re-sync: sees the assertion → never proposes the merge again
-```
-
-The model's job is not to auto-decide the hard cases. It is to **preserve the evidence** so the
-decision — human or algorithmic — is made on real provenance (names, photos, sources), not
-flattened coordinates, and can always be undone.
-
-### Resolving structural conflicts (merge vs. split vs. delete, across sources)
-
-Attribute conflicts (name, hours) are resolved by §4. **Structural conflicts are harder** — but they
-use the *same* machinery: `merge`, `split`, `distinct`, and `delete` are themselves
-**confidence-weighted assertions** in the log (actor · tier · timestamp), and the current identity
-graph is the highest-confidence-consistent resolution of them.
-
-- **A weak merge is overturned by a stronger `distinct`.** Plinkato anonymous merges A+B (0.25); an
-  ambassador asserts `distinct(A,B)` (0.90) → they stay separate; the merge is retained but out-voted.
-- **A strong merge holds against a weak delete.** An ambassador merges A+B (0.90); a scrape deletes A
-  (0.20) → the merge holds, and "A is gone" becomes a *weak `gone` observation on the merged canonical*,
-  out-voted by B's fresh "present" signals.
-
-**The partial-delete case (merge A+B, then a source deletes only A).** Once merged, A's identity *is*
-the canonical C, so "delete A" resolves to a `gone` observation *on C*, weighed against B's
-present-signals:
-- If B is clearly alive → the delete loses (the piano is still there; that source had stale info about "A").
-- If the delete carries evidence that A ≠ B (different coords/name — a `distinct` signal) → that's
-  evidence the **merge was wrong**. If it out-ranks the merge, the system **splits C back** into A
-  (gone) and B (alive). A conflicting delete is thus a *signal to re-examine the merge*, not a
-  contradiction to swallow.
-
-**Contested ties get a human, not a silent guess.** When two structural assertions are near-equal
-confidence (an ambassador merged; a *different* ambassador says distinct), the identity is flagged
-**`contested` / `needs_verification`** and surfaced for a trusted actor (ambassador/admin) to adjudicate
-in the Explorer. Their decision is a high-confidence, **sticky** assertion (like `pinned-distinct`) that
-settles it. OpenPianos takes a stance where it can be confident and escalates where it can't — it never
-fakes certainty on a genuinely ambiguous identity.
-
-Because every assertion is immutable and logged, **any structural decision is reversible**, and the
-*raw* assertions are always published alongside the resolved canonical (§7) — so a consumer that weighs
-sources differently can re-derive its own identity graph.
-
----
-
-## 7. Published views — canonical vs. raw
-
-OpenPianos publishes **two views of the same log**, plus a sync feed. Both are *generated* from the
-event log; neither is a separately-maintained database.
-
-| View | What it is | For |
-|------|-----------|-----|
-| **Canonical / resolved** | The *sanitized* projection: one clean record per piano, conflicts resolved by the reference model, current `status`, reference `confidence`, prose reduced to structured signal, media as deep links. Exported as JSON / GeoJSON / CSV / SQLite. | Most consumers; the map/website default. |
-| **Raw observations / event log** | The full provenance: every observation, every `merge`/`distinct` assertion, full history. | Auditors, the Explorer drill-down, and consumers that **re-derive their own resolution/confidence**. |
-| **`/changes` feed** | Incremental change records. | Apps staying in sync. |
-
-Two properties make the canonical *authoritative*, not just convenient:
-
-- **Traceable** — each canonical record carries its provenance (source list + reference confidence),
-  with the raw observations one hop away. Resolved ≠ black box.
-- **Reproducible** — the canonical is generated by a *published, versioned* resolution model from the
-  *open* event log, so **anyone can regenerate and verify it.** You hand consumers the inputs and the
-  function, not just a snapshot to trust.
-
-The website / **Explorer** defaults to the canonical resolved view and drills into the raw
-observations + the date scrubber on demand — so it *observes* both: the sanitized answer up front,
-the full provenance underneath.
-
-## 8. `Verification`
-
-A community confirmation, modeled as an `Observation` of kind `verification`, surfaced as its own
-view for convenience: `result` ∈ `present` · `gone` · `moved`, plus `notes`, `verifiedAt`, and the
-usual provenance facets. Feeds both `lastVerifiedAt` and the confidence resolution.
-
-## 9. `ChangeLog` — append-only history
-
-Every mutation writes a change record: `entityType` (`piano`/`venue`/`observation`/`photo`),
-`entityId`, `action` (`create`/`update`/`merge`/`distinct`/`status_change`/`remove`), `actor`,
-`createdAt`.
-This powers the `/changes` sync feed, the Explorer's **date scrubber** (render the dataset *as of*
-any date), and public trust (anyone can audit how a record evolved).
-
----
-
-## Why this beats a flat table
-
-Two failures we've all lived: you merge "duplicates" from flattened names and later find they
-were *different* pianos; a re-sync resurrects a piano you deleted. Both come from throwing away
-provenance and treating a piano as an editable row. This model fixes both by construction —
-**immutable, attributed observations + a stable identity + facts-vs-derived confidence + sticky,
-logged clustering + an append-only history.** Merges become re-parenting, deletes become sticky
-negative observations, prose and media stay at their source as structured signal, and every
-consumer can *see and re-weigh* why the canonical says what it says.
+- Confidence scores and trust tiers: replaced by visible attribution + `lastVerifiedAt` + who
+  verified. If spam ever demands more, we add it then.
+- Stored media: links only.
+- Recurring seasonal pianos: a returning festival piano is re-activated (or re-added) per season.

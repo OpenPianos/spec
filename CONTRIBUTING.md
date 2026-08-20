@@ -1,124 +1,68 @@
 # OpenPianos — Contributing
 
-Data enters, gets verified, and is retired through explicit workflows. **No data is ever
-permanently deleted** — retirement is a status change plus a logged reason.
+Three ways data changes: edits, verifications, and imports. All three are logged; nothing is ever
+permanently deleted.
 
-Contributions arrive two ways: **humans** (through a consuming app or the API) and **importers**
-(bulk sources like pianos.pub, OSM, rail operators). Both become attributed `Observation`s.
+## Editing (anyone with an account)
 
-## Piano submission
+Like Wikipedia: open the piano, change what's wrong, save. Adding a new piano is creating a new
+page. Every edit records who made it and when, and the full revision history is kept, so any edit
+can be reverted. New accounts' edits may be flagged for ambassador review while trust is built;
+that's a review queue, not a submission wall.
 
-```
-Submit  →  Pending review  →  Approved  →  Published
-```
+## Verifying
 
-- A submission is an `Observation` of kind `submission` with the submitter's confidence tier.
-- On approval it either **creates** a new canonical piano or **attaches** to an existing one
-  (matched by `(sourceId, sourceRef)`, else by proximity + name).
-- High-trust submitters (owner, area ambassador) may be auto-approved; anonymous ones queue.
+The single most valuable contribution is the simplest one: **"I'm here, the piano is still
+here."** One tap on the site (or in a consuming app) updates the piano's `lastVerifiedAt` and
+records who verified it and how (in person, QR scan on the piano, photo, phone call to the
+venue). The map shows freshness, so a piano verified last week reads differently from one nobody
+has seen since 2019.
 
-## Verification
+Reporting a piano **gone** works the same way: a "no longer here" verification. An ambassador
+confirms it (or the reports pile up) and the status flips to `removed`. The page stays, history
+intact, and can be revived if the piano returns.
 
-```
-User visits piano  →  confirms present / gone / moved  →  stored  →  lastVerifiedAt updated
-```
+## Ambassadors
 
-A verification is an `Observation` of kind `verification`. A QR scan / geo-verified visit adds a
-proof-of-presence boost. Verifications feed the confidence resolution, so a fresh high-trust
-"present" keeps a piano alive and a fresh high-trust "gone" begins retiring it.
+An ambassador adopts a scope: one piano, a venue, a city, a state, or a country. Within it they:
 
-## Removal
+- review recent edits and fix mistakes,
+- verify pianos (their verification is the strongest freshness signal),
+- settle disputes (is this a duplicate? was that removal real?),
+- welcome and guide new contributors in their area.
 
-```
-Report missing  →  review (weighed by tier)  →  status → removed  (history kept)
-```
+Their dashboard shows what changed in their scope, what's unverified the longest, and what's been
+reported gone.
 
-Removal is a **negative observation at a location**, carrying the reporter's tier (see the
-confidence model in `SCHEMA.md`). It suppresses re-imports of the same spot from *any* source
-that doesn't out-rank it — but a genuinely different nearby piano, or a newer higher-tier
-positive report, is unaffected. Nothing is deleted; the piano is tombstoned and can revive.
+## Venue operators
 
-## Claiming & operator self-service
+Whoever runs the venue has the freshest knowledge. An operator can claim their venue, verify the
+claim (official email domain, phone, or a token on the venue's website), and then maintain their
+own pianos directly: hours, access rules, a removal, a new grand. Operator edits are ordinary
+attributed edits; they don't erase history.
 
-The freshest, highest-trust data for a venue comes from **whoever operates it** — a library knows its
-practice-room hours, that a piano was removed, that a new grand arrived. So a verified operator can
-claim and maintain their own venue directly. Operator edits are just **high-confidence observations**
-(`actorRole: operator`) — authoritative for their venue, but still provenance-tagged, logged, and
-reversible; they never erase history or another source's attribution.
+## Imports (bulk sources)
 
-**Claim → verify → manage:**
+Seeding and syncing from existing datasets (pianos.pub, rail operators, community maps; see
+`SOURCES.md`):
 
-1. **Claim** — the operator asserts they run venue *X*.
-2. **Verify ownership** (rising rigor): a link to an address at the venue's **official email domain**;
-   a **one-time code** to the venue's official phone / postal address; a **verification token** placed
-   on the venue's official website; or ambassador/admin review for edge cases.
-3. **Manage** — once verified, they update hours, booking URL, fees; add pianos; mark one removed (a
-   high-confidence `gone` observation). All written as `operator` observations against the `Venue` and
-   its `Piano`s.
+- Each imported record remembers its source and the source's id, so re-imports update the same
+  piano instead of duplicating it.
+- Hand-made corrections survive re-syncs: if a human merged or removed a piano, a re-import of
+  the same source record respects that.
+- An import never overwrites a fresher human edit.
+- Only import sources whose license or explicit permission allows CC0 redistribution (see
+  `LICENSE`); when in doubt, ask the source first.
 
-**Access surfaces** (an institution shouldn't have to join any one app to manage its own data):
+## Photos and comments
 
-- **A neutral OpenPianos "venue portal"** — a small authenticated web form to claim + edit. The
-  primary, app-independent path.
-- **Any consuming app** may also surface a "claim your venue" flow and write via the contribution API.
-- **Direct API with a key** — for institutional operators with their own systems (a rail operator or
-  library network pushing an official list programmatically).
+The dataset stores **links, not media**: a photo is a link to where it lives, never the image
+file itself. Free-text comments stay in the apps that collected them; what OpenPianos stores is
+the useful fact ("out of tune", "ask reception for the key") plus a link back. This keeps the
+dataset small, portable, and free of copyright and privacy problems, which matters because CC0
+publication is irrevocable.
 
-**Safety:** verification gates the claim; every edit is a reversible, provenance-tagged observation; a
-false claim is revoked and its observations down-weighted. An operator contributes authoritative signal
-about *their own* venue — they cannot delete history or override another source's provenance.
+## Changing the spec
 
-## Importers (bulk sources)
-
-An importer maps each incoming record to an `Observation` keyed by `(sourceId, sourceRef)`:
-
-- **already mapped, active canonical** → update that observation; re-resolve the canonical.
-- **mapped to a merged/removed canonical** → honor it (fold into survivor, or stay retired).
-  *This is how hand-curation survives every re-sync.*
-- **unmapped** → cluster by proximity + name → attach or create.
-
-Importers must set `Source.license` honestly (see `LICENSE`) and must never overwrite a
-higher-trust human observation with a scraped one.
-
-## Photos
-
-Contribute a **deep link**, never an image file. A photo is an `Observation` of kind `photo`
-with a `url` into the hosting app/post (see `SCHEMA.md`). The canonical stays media-free.
-
-## Why facts, not prose (and links, not media)
-
-OpenPianos stores *structured facts* extracted from comments — never the raw comment text — and
-*deep links* to photos — never the image bytes. This isn't only about tidiness; it's deliberate,
-and it holds **even when we have the source's permission to ingest**. Reasons, strongest first:
-
-1. **Platform permission ≠ author permission.** Facts (*"out of tune", "ask reception for the key"*)
-   are not copyrightable, so we can store them freely. But the *words* of a comment are the
-   **author's** copyrighted expression — and a source granting us its *database* can't necessarily
-   sublicense every commenter's prose for **CC0 republication**. Extracting facts removes the
-   author's expression entirely, so there is no author copyright to clear.
-
-2. **Privacy, and CC0 is irrevocable.** Comments contain names and personal detail. Publishing raw
-   prose into an open, public-domain, **un-retractable** dataset would republish that PII globally,
-   forever, with no way to take it back. Structured facts carry no personal content.
-
-3. **Quality & scope.** We want piano *signal*, not a comment section — no ads, spam, abuse, or
-   off-topic chatter. Extraction is the filter.
-
-4. **Portability & reach.** Typed facts keep the dataset a small, queryable, single-file export;
-   they also normalise across languages (a Dutch or Japanese comment becomes the same structured
-   signal a keyword matcher never could).
-
-5. **It's what data exchanges cover.** Partner agreements (e.g. pianos.pub) are scoped to *data*,
-   not the verbatim republication of users' prose.
-
-**Bulk ingestion still requires the source's permission/license** for the *database* itself (in the
-EU, the sui-generis database right applies even to uncopyrightable facts) — but that is a separate
-question from storing users' *words*, which we never do. Every observation records its `Source` and
-that source's `license`, so what may be redistributed is always inspectable. When adding a new
-source, confirm its license/permission first (see `LICENSE`), and — for an authoritative public
-dataset — have per-source ingestion reviewed by counsel before scaling.
-
-## Making changes to the spec itself
-
-The data model, governance, and license live in this repo. Propose changes as pull requests so
-the reasoning is public and versioned.
+The model, governance, and license live in this repo. Propose changes as pull requests so the
+reasoning stays public and versioned.
