@@ -1,10 +1,22 @@
 # OpenPianos — Product & Technical Brief (v1)
 
 > Historical document, preserved as-is. Written by **Daniel Seixas** (PianoMeetups), August 2026 —
-> the founding brief credited in `README.md`. Some specifics have since evolved (stack: the
-> MariaDB/Fastify plan became a Cloudflare Worker + Neon Postgres; workflow: pre-moderation became
-> the wiki model of ADR-0005) — see `DECISIONS.md`. The dataset/API/contribution pillars, stable
-> IDs, statuses, export channels, and the GitHub dataset mirror structure remain the blueprint.
+> the founding brief credited in `README.md`. The dataset/API/contribution pillars, stable IDs,
+> statuses, export channels, and the GitHub dataset mirror structure remain the blueprint.
+>
+> **What has evolved since v1** (each agreed by both founders — see `DECISIONS.md` and the repos):
+>
+> | Brief v1 | Now | Where |
+> |---|---|---|
+> | MariaDB + Fastify + Drizzle | Cloudflare Worker + Neon Postgres (serves the same portability goal: plain Postgres, exportable anywhere) | `site` repo |
+> | Hyperthings private GitLab + GitLab CI | GitHub org; implementation repo private until launch, spec + dataset public; deploys scripted, CI later via GitHub Actions if wanted | org |
+> | Submit → Pending Review → Approved → Published | Wiki model (ADR-0005): edits live immediately with full revision history; *new* pianos public but `canonical` only after ambassador verification | `SCHEMA.md` |
+> | Photos hosted (`url`) | Dataset carries links only; the site hosts its own media as a site feature | `SCHEMA.md` |
+> | — | Ambassadors (scoped stewards), temporary/seasonal pianos excluded from the canonical set, multi-source crosswalk (`osmId` generalized to `piano_sources`) | `SCHEMA.md` |
+> | `openpianos.org` | `openpianos.net` | — |
+>
+> Open, pending the data-model session: `indoor`/`feeRequired` restoration, the stale-after-a-year
+> status, per-source licensing in exports, the `/api/v1` contract.
 
 ## Executive Summary
 
