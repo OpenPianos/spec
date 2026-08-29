@@ -93,6 +93,13 @@ Mirrored rows are not testimony, and three rules keep the line honest:
 3. **No echo.** Outbound testimony (feeds, partner exchanges) filters
    `source = 'site'` and attested partner slugs — a mirror of their data
    never leaves us wearing our uniform.
+4. **Paraphrase, not copy.** A mirror row may carry OUR one-line paraphrase
+   of the sighting's caption ("a visitor described playing while waiting
+   for a flight") — our authorship, CC0, always labeled *paraphrase* and
+   linked to the original. Never the caption's own wording. Generated at
+   link/create time (not corpus-wide), publish-first, ambassador-voidable —
+   the same post-moderation stance as photos (§8 applies: marked as
+   AI-drafted derived text, never record content).
 
 Live attestations differ from scraped history: a partner app **pushing** a
 claim through the write API stands behind it in real time and lands as a
