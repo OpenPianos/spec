@@ -22,6 +22,14 @@ Reporting a piano **gone** works the same way: a "no longer here" verification. 
 confirms it (or the reports pile up) and the status flips to `removed`. The page stays, history
 intact, and can be revived if the piano returns.
 
+## Roles, as built (Aug 2026)
+
+**Keeper** tends one piano · **Ambassador** tends an area (below) ·
+**Curator** tends the dataset — imported leads become pianos only through a
+curator's decision in the review inbox. Presence (GPS/QR) is recorded as
+provenance on a report, never required to make one. One gone-report already
+reaches the review queue; status flips to `removed` only by human hand.
+
 ## Ambassadors
 
 An ambassador adopts a scope: one piano, a venue, a city, a state, or a country. Within it they:
