@@ -66,21 +66,37 @@ link (a YouTube video, an Instagram post). No per-platform fields — how a link
 embeds is presentation logic. An attached link never upgrades trust by
 itself: freshness follows the asserted verdict, not the exhibit.
 
-## 4. Source evidence is not testimony
+## 4. Source evidence: facts mirror in, expression stays out
 
-A source's observation stream (e.g. dated third-party sightings) is kept as
-**evidence on the lead** — counts, spans, kinds, full stream in `raw` — and
-shown during review. The **facts** of that stream (that a sighting happened,
-when, how many, where the record lives) are not expression and ship freely:
-they render as dated lines on the piano page and ride the crosswalk into the
-CC0 dataset (`sightings`, `first_seen`/`last_seen`, `reports_absent`, `url`).
-The sightings' text and media are expression — they stay at the source,
-reachable through the link, never copied into records, observations, or
-exports. It is **never imported into our observations**: no
-verdict, no method, no attributable witness. Imports fill *presence*; only
-people (or attested partner apps via the write API, marked with their source)
-produce observations. A record created from a source is therefore *published
-but unverified* — and scored accordingly — until someone stands at the piano.
+A source's observation stream (e.g. dated third-party sightings) lives
+verbatim on the **lead** (`raw`) and is shown during review. Once a lead is
+crosswalked to a piano, every sighting in that stream also exists as an
+**observation row on the piano** (decided 30 Aug 2026): the **facts** only —
+type (present/gone), moment, source tag, and a link to the source — because
+facts are not expression and ship freely, on the piano page and in the CC0
+dataset. The sightings' **text and media are expression**: they stay at the
+source, reachable through the link, never copied.
+
+Mirrored rows are not testimony, and three rules keep the line honest:
+
+1. **Never human verification.** A mirrored row never sets
+   `last_verified_at` and carries no actor — the score weighs
+   `source = 'pianos.pub'` differently from `source = 'site'`. A record
+   created from a source stays *published but unverified* — and scored
+   accordingly — until someone stands at the piano.
+2. **Idempotent and reconciled.** A partial unique index (piano, source,
+   moment) makes re-links and re-imports insert only what is new. If a
+   source revises history (sighting deleted, spam pulled), the import diff
+   flags it to the inbox ("sighting stream revised upstream") for hand
+   reconciliation — sources rarely revise, so this is a tripwire, not a
+   pipeline.
+3. **No echo.** Outbound testimony (feeds, partner exchanges) filters
+   `source = 'site'` and attested partner slugs — a mirror of their data
+   never leaves us wearing our uniform.
+
+Live attestations differ from scraped history: a partner app **pushing** a
+claim through the write API stands behind it in real time and lands as a
+first-class observation marked with its slug.
 
 **Every source speaks its own dialect of evidence.** Each ingester's job is to
 translate that dialect into the one shared lead shape; the loader diffs
