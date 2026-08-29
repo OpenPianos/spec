@@ -70,7 +70,13 @@ itself: freshness follows the asserted verdict, not the exhibit.
 
 A source's observation stream (e.g. dated third-party sightings) is kept as
 **evidence on the lead** — counts, spans, kinds, full stream in `raw` — and
-shown during review. It is **never imported into our observations**: no
+shown during review. The **facts** of that stream (that a sighting happened,
+when, how many, where the record lives) are not expression and ship freely:
+they render as dated lines on the piano page and ride the crosswalk into the
+CC0 dataset (`sightings`, `first_seen`/`last_seen`, `reports_absent`, `url`).
+The sightings' text and media are expression — they stay at the source,
+reachable through the link, never copied into records, observations, or
+exports. It is **never imported into our observations**: no
 verdict, no method, no attributable witness. Imports fill *presence*; only
 people (or attested partner apps via the write API, marked with their source)
 produce observations. A record created from a source is therefore *published
