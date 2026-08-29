@@ -54,6 +54,13 @@ separate observations from revisions:
 One human act may produce rows in both streams (create a piano + attach your
 photo); they share an `act_id` so the history reads as one visit.
 
+**Assertions vs attachments.** An observation's `type` is what the person
+asserts (present / gone / note / photo); attachments are its exhibits:
+`media_key` for media we host (CC0, face-blurred) or `url` for an external
+link (a YouTube video, an Instagram post). No per-platform fields — how a link
+embeds is presentation logic. An attached link never upgrades trust by
+itself: freshness follows the asserted verdict, not the exhibit.
+
 ## 4. Source evidence is not testimony
 
 A source's observation stream (e.g. dated third-party sightings) is kept as
@@ -82,6 +89,19 @@ where available) for script accessibility; venue names are transliterated,
 not translated, and no per-language name matrix is kept. Country values are
 normalized to English in the data; interfaces localize display.
 
+### Photos and the feature image
+
+Photos are **publish-first, post-moderated** — like every other contribution
+(wiki model: live immediately, revertable, attributed). Ambassadors oversee
+through the activity trail and may replace or remove any piano's photo;
+superseded or removed photos are *voided* observations — struck from
+consideration, kept in the log. The automated safety pipeline (unsafe-content
+screening, face blurring) runs post-publish and can unpublish.
+
+A piano's **feature image is derived, not stored**: the first approved,
+non-voided photo observation — overridable by an explicit curator pick.
+Hiding the underlying observation heals the hero automatically.
+
 ## 7. Licensing
 
 - The dataset is **CC0, without asterisks**, achieved by the candidate layer:
@@ -95,6 +115,11 @@ normalized to English in the data; interfaces localize display.
   CC0, by upload or by AI transformation (a derivative work stays the
   photographer's; a synthetic image is fabricated testimony and is rejected
   for that reason alone).
+- **Links in exports:** exports may link to external *pages* as evidence
+  (source records, videos); they never link to source *media files*. Media
+  URLs appearing in the dataset are exclusively our own CC0-dedicated
+  uploads — a media URL in OpenPianos data always means "you may use this".
+  Linked external pages are not covered by the dedication.
 
 ## 8. Generated content
 
