@@ -23,6 +23,11 @@ implemented and running; this document makes it policy.
    lead (create), links it to an existing piano, records a removed piano, or
    rejects it. Every decision is attributed and logged. Bulk tools execute
    many decisions at once but never invent one.
+   **Identity is the only gate.** There is no separate "canonical" blessing:
+   a piano with an identity is in the dataset, carrying computed
+   reliability/freshness values; what to display is the consumer's threshold
+   choice, never an editorial one (three layers: identity is human, evidence
+   is accumulated and human-vetted, display is computed + user preference).
 4. Re-imports are idempotent: a decided lead never returns; a linked source
    record's news arrives as events on *our* piano, not as a duplicate.
 
@@ -68,8 +73,8 @@ A source's observation stream (e.g. dated third-party sightings) is kept as
 shown during review. It is **never imported into our observations**: no
 verdict, no method, no attributable witness. Imports fill *presence*; only
 people (or attested partner apps via the write API, marked with their source)
-produce observations. A record created from a source is therefore *canonical
-but unverified* until someone stands at the piano.
+produce observations. A record created from a source is therefore *published
+but unverified* — and scored accordingly — until someone stands at the piano.
 
 ## 5. The crosswalk
 
