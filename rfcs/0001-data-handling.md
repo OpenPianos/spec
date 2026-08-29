@@ -76,6 +76,25 @@ people (or attested partner apps via the write API, marked with their source)
 produce observations. A record created from a source is therefore *published
 but unverified* — and scored accordingly — until someone stands at the piano.
 
+**Every source speaks its own dialect of evidence.** Each ingester's job is to
+translate that dialect into the one shared lead shape; the loader diffs
+source-agnostically. Sighting-stream sources (pianos.pub) carry explicit dated
+observations per piano. **Listing sources** (NS, airportpianos, OSM) carry no
+dates at all — their evidence *is the diff between pulls*:
+
+- **Still listed** on a complete pull is a weak alive-signal, dated by the
+  fetch — a maintained listing saying "there's a piano here" *today* is
+  current information.
+- **Delisted is absence evidence.** Silence after speech is a statement: for
+  an actively maintained listing, removal is often the strongest signal that
+  source ever emits. A complete pull is diffed against what we hold; records
+  the source no longer lists emit an absence event ("no longer listed on X").
+  This only runs on pulls known to be complete — a partial fetch must never
+  mass-emit absences — and the event names the kind of absence, because
+  strength varies by source (an NS delisting is strong; an OSM deletion may be
+  a mapper edit, not a missing piano). Humans and the score weigh it, as with
+  all source evidence.
+
 ## 5. The crosswalk
 
 `(source, source_ref) → piano` maps every external record onto our piano —
