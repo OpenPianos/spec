@@ -144,6 +144,13 @@ normalized to English in the data; interfaces localize display.
 
 ### Photos and the feature image
 
+**The licensing flag is `observations.source`.** A photo row with
+`source = 'site'` was contributed under the CC0 dedication and is CC0. A photo
+row with an import slug is a curator-derived feature photo (best source
+sighting, faces blurred): NOT CC0, stored with the original's link and an
+explicit not-CC0 marker, shown on the site but never distributed in the
+dataset — a placeholder until an ambassador's own CC0 photo replaces it.
+
 Photos are **publish-first, post-moderated** — like every other contribution
 (wiki model: live immediately, revertable, attributed). Ambassadors oversee
 through the activity trail and may replace or remove any piano's photo;
