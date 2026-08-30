@@ -1,76 +1,84 @@
-# OpenPianos — Contributing
+# OpenPianos — Governance & contributing
 
-Three ways data changes: edits, verifications, and imports. All three are logged; nothing is ever
-permanently deleted.
+How the project is run, who does what, and how data changes. (This file absorbed the former
+`GOVERNANCE.md` and `DECISIONS.md` — one document for how the project works, Aug 2026.)
 
-## Editing (anyone with an account)
+## Principles
 
-Like Wikipedia: open the piano, change what's wrong, save. Adding a new piano is creating a new
-page. Every edit records who made it and when, and the full revision history is kept, so any edit
-can be reverted. New accounts' edits may be flagged for ambassador review while trust is built;
-that's a review queue, not a submission wall.
+1. **Community-owned, not app-owned.** No single application owns the dataset. Plinkato and
+   PianoMeetups are consumers like everyone else; that neutrality is what lets independent
+   sources contribute without feeding a competitor. Infrastructure runs on neutral accounts
+   (hello@openpianos.net) with both founders admin.
+2. **Stable identifiers.** Every piano gets a permanent id, never reused; merged ids redirect.
+3. **Nothing is ever deleted.** A gone piano becomes a `removed` tombstone; its page and full
+   history remain. Moderation *voids* (attributed, reasoned), never erases.
+4. **Every change is attributed.** Who did what, when, is always inspectable — transparency is
+   the main safeguard.
+5. **Portability.** Public exports and a versioned mirror on rehostable infrastructure. The
+   data must outlive the project.
+6. **Founders decide by consensus** while the project is small. Substantive changes to spec,
+   license, or governance land as pull requests so the reasoning stays public. When there's a
+   concrete reason (grants, partners, money), incorporate a non-profit and move the org and
+   domains into it.
 
-## Verifying
+## How data changes
 
-The single most valuable contribution is the simplest one: **"I'm here, the piano is still
-here."** One tap on the site (or in a consuming app) updates the piano's `lastVerifiedAt` and
-records who verified it and how (in person, QR scan on the piano, photo, phone call to the
-venue). The map shows freshness, so a piano verified last week reads differently from one nobody
-has seen since 2019.
+**Edits** — like Wikipedia: open the record, fix it, save. Every edit writes a revision;
+anything reverts. **Testimony** — the most valuable contribution is the simplest: *"I'm here,
+the piano is here"* (a tap, a note, a photo). Presence signals (GPS, QR scan) are recorded as
+*provenance* on a report, never required to make one. **Gone reports** are testimony too: one
+report already reaches the curator inbox; status flips to `removed` only by human hand.
+**Imports** — external records arrive as leads and become pianos only through a curator
+decision; re-imports update rather than duplicate, and never overwrite fresher human knowledge.
+The normative rules live in [RFC-0001](rfcs/0001-data-handling.md).
 
-Reporting a piano **gone** works the same way: a "no longer here" verification. An ambassador
-confirms it (or the reports pile up) and the status flips to `removed`. The page stays, history
-intact, and can be revived if the piano returns.
+## Roles (as built, Aug 2026)
 
-## Roles, as built (Aug 2026)
+- **Anyone** — read; with an account (or anonymously, rate-limited): create pianos, confirm,
+  note, photograph, report gone.
+- **Ambassador** — a vetted person. Trust follows the person, not geography: verify, set
+  photos, moderate, merge and tombstone *anywhere*; their city is their patrol responsibility
+  and public identity. An ambassador's confirmation is what sets a piano's **verified badge**
+  (`last_verified_at/by`) — always via their own dated, named testimony, never a bare flag.
+- **Curator** — tends the dataset: works the import inbox, decides identity (create / link /
+  tombstone / reject). Currently the founders plus promoted ambassadors.
+- **Venue operators** (planned) — claim their venue against an official domain/phone and
+  maintain their own pianos; ordinary attributed edits.
 
-**Keeper** tends one piano · **Ambassador** tends an area (below) ·
-**Curator** tends the dataset — imported leads become pianos only through a
-curator's decision in the review inbox. Presence (GPS/QR) is recorded as
-provenance on a report, never required to make one. One gone-report already
-reaches the review queue; status flips to `removed` only by human hand.
+(The earlier per-piano **Keeper** role was removed Aug 2026 as too granular; it may return
+with a real job if scheduled/roving pianos are built.)
 
-## Ambassadors
+## Money and neutrality
 
-An ambassador adopts a scope: one piano, a venue, a city, a state, or a country. Within it they:
+The raw data stays free (CC0), forever — paywalling it would destroy the trust that makes it
+valuable. Money is made on top: apps, services, sponsorships. The OpenStreetMap model.
 
-- review recent edits and fix mistakes,
-- verify pianos (their verification is the strongest freshness signal),
-- settle disputes (is this a duplicate? was that removal real?),
-- welcome and guide new contributors in their area.
+## Decision log
 
-Their dashboard shows what changed in their scope, what's unverified the longest, and what's been
-reported gone.
+Substantive decisions and why — condensed; full reasoning in git history and RFC-0001.
 
-## Venue operators
-
-Whoever runs the venue has the freshest knowledge. An operator can claim their venue, verify the
-claim (official email domain, phone, or a token on the venue's website), and then maintain their
-own pianos directly: hours, access rules, a removal, a new grand. Operator edits are ordinary
-attributed edits; they don't erase history.
-
-## Imports (bulk sources)
-
-Seeding and syncing from existing datasets (pianos.pub, rail operators, community maps; see
-`SOURCES.md`):
-
-- Each imported record remembers its source and the source's id, so re-imports update the same
-  piano instead of duplicating it.
-- Hand-made corrections survive re-syncs: if a human merged or removed a piano, a re-import of
-  the same source record respects that.
-- An import never overwrites a fresher human edit.
-- Only import sources whose license or explicit permission allows CC0 redistribution (see
-  `LICENSE`); when in doubt, ask the source first.
-
-## Photos and comments
-
-The dataset stores **links, not media**: a photo is a link to where it lives, never the image
-file itself. Free-text comments stay in the apps that collected them; what OpenPianos stores is
-the useful fact ("out of tune", "ask reception for the key") plus a link back. This keeps the
-dataset small, portable, and free of copyright and privacy problems, which matters because CC0
-publication is irrevocable.
+- **CC0 for the data** *(accepted)*. Weighed CC0 vs ODC-BY/CC-BY vs ODbL/share-alike. CC0 wins
+  on adoption (zero legal hesitation for consumers), matches the money-on-top model, and
+  freshness — not the license — is the moat. Consequences: raw OSM (ODbL) can never enter the
+  CC0 core (leads only, or a separate attributed layer); redistributing a source's data needs
+  that source's permission; attribution is a norm, not a demand. Revisit only if OSM-derived
+  data becomes central.
+- **Wiki + ambassadors instead of the event-sourced model** *(accepted, 19 Aug 2026)*. The
+  first spec modeled every fact as an immutable observation with confidence resolution —
+  sound but heavy. Kept from it: CC0, stable ids, nothing deleted, everything attributed,
+  imports keyed to source, links-not-media for external content. The observation *stream*
+  returned in slimmer form as the testimony ledger (RFC-0001 §3).
+- **Aug 2026 data-handling decisions** — leads pipeline, sighting mirroring,
+  quote-with-attribution, canonical removal, roles, presence-as-provenance — live together in
+  **[RFC-0001](rfcs/0001-data-handling.md)**, ratified as a whole.
+- **GitHub as the home** *(settled by practice, Aug 2026)*: public community reach, org
+  co-owned by both founders; site private until launch, spec + dataset public.
+- **Postgres as the canonical store** *(settled by practice, Aug 2026)*: Neon Postgres,
+  co-owned org.
+- **Venue modeling** *(open)*: piano as the atom; an optional Venue grouping entity for
+  bookable studios remains the leaning.
 
 ## Changing the spec
 
-The model, governance, and license live in this repo. Propose changes as pull requests so the
-reasoning stays public and versioned.
+Propose changes as pull requests to this repo. RFCs (in `rfcs/`) carry substantive data-handling
+changes; merge = ratification by both founders.

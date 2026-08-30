@@ -1,15 +1,25 @@
 # OpenPianos — Source Registry
 
-This is the living registry of candidate sources for the OpenPianos canonical dataset. Every row
-here is a candidate `Source` record (see `SCHEMA.md` §2: `id`, `name`, `kind`, `license`) — the
-row doesn't mean "ingested," it means "assessed." A source only earns a `Source.id` and starts
-writing `Observation`s once someone actually builds the importer. The **License / Redistribution**
-columns are the load-bearing ones: per `LICENSE`, the OpenPianos dataset is CC0, but several
-sources here carry their own license (ODbL, proprietary, or none stated) that CC0 **cannot
-override** — those columns tell you, per source, whether it can be folded straight into the CC0
-core, must stay attributed/share-alike, or needs explicit permission before a single record is
-imported. Counts, licenses, and access mechanisms below are as last verified; re-check before
-building an importer, especially for anything flagged in "Unverified / to-check."
+This is the living registry of sources for the OpenPianos dataset — and, per RFC-0001, the
+**licensing resolver**: an observation or photo tagged `source = X` has its terms resolved by X's
+row here. The **License / Redistribution** columns are the load-bearing ones: the OpenPianos
+dataset is CC0, but a source's own license (ODbL, proprietary, none stated) **cannot be
+overridden** — those columns say, per source, whether its data folds into the CC0 core, stays
+attributed, or needs explicit permission first. A row means "assessed", not "ingested"; the
+table directly below is what actually flows today. Re-verify counts/licenses before building a
+new importer.
+
+---
+
+## ✅ Ingested (live pipelines, Aug 2026)
+
+| Source | Basis | Mechanism |
+|---|---|---|
+| **pianos.pub** | **Explicit permission from Zack Scholl, 1 Aug 2026** ("Certainly you can have my permission… periodically download the geojson"). Contact: his personal gmail + the pianos.pub domain address (the old `zack@mail.pianos.travel` bounces/goes stale — do not use). | Authorised feed snapshot (4 Aug) as baseline; feed has 401'd since ~10 Aug (his bot-limiter, presumably) so daily catchup runs via the robots.txt-advertised sitemap + per-page JSON-LD/HTML sightings. Cron 05:40 UTC. Sightings mirror as observations; captions held verbatim, displayed as attributed quotes, never exported (RFC-0001 §4). |
+| **NS (Dutch Rail) station listing** | Official public listing | Complete-pull listing diff (still-listed = weak alive signal; delisting = absence event). |
+| **airportpianos.org** | CC0 dedication (data; photo confirmation pending) | Listing importer. |
+| **OpenStreetMap `amenity=piano`** | ODbL — leads only, never folded into the CC0 core | Overpass pulls + removal-changeset-comment harvesting for negative signals. |
+| **YouTube (Data API)** | Facts about public videos via the official API; videos embedded, never copied | Daily search sweep (11 queries/languages), AI venue extraction, Nominatim geocoding; every video its own lead, no merging. Cron 05:20 UTC. |
 
 ---
 
@@ -50,7 +60,7 @@ two largest independent aggregators.
 | [OSM Piano IDF / FR / AR (uMap)](https://umap.openstreetmap.fr/en/map/osm-piano-idf_654399) | France, Île-de-France, Arabic-speaking countries (3 regional maps) | Map-scrape (403 on direct fetch — bot-blocked); same data pullable via Overpass | ODbL | Open — attribute + share-alike | Low | Query Overpass directly rather than scraping these uMap instances |
 | [Wikimedia Commons — Category:Street pianos](https://commons.wikimedia.org/wiki/Category:Street_pianos) | Worldwide, ~14 country subcats, ~43 photos total | Map-scrape (per-file, no bulk export) | CC0 (structured data layer); per-file mixed (CC-BY-SA/CC-BY/PD); page text CC-BY-SA | Open, but no unified "dataset" license — check per file | Low | Photo category, not a location registry; only a few files are geotagged |
 | [MapContrib "Pianos map" (OpenPianosMap, archived)](https://www.mapcontrib.xyz/t/e5c83c-Pianos_map) | Worldwide in principle | Dead site (TLS cert mismatch / connection refused) | ODbL | Open, but nothing to fetch | Low | Defunct; use Overpass directly for the same underlying OSM data |
-| [pianos.pub (Public Pianos)](https://pianos.pub/about) | Global, claims 125 countries | Map/list-only; no API or export | None stated | **Blocked** — ToS explicitly prohibits systematic retrieval/scraping | Low (pending permission) | Plausibly the largest public-piano DB (~10,000+); email zack@mail.pianos.travel before any ingestion |
+| [pianos.pub (Public Pianos)](https://pianos.pub/about) | Global, claims 125 countries | Feed built for us (`/pianos.geojson`) + sitemap/JSON-LD | None stated (ToS prohibits scraping — superseded for us by permission) | **Permitted** — explicit permission from Zack Scholl, 1 Aug 2026; see Ingested table above | ✅ ingested | The largest public-piano DB (~11k records); relationship maintained directly with Zack |
 | [World Pianos (Sing for Hope)](https://worldpianos.org/) | Global, every continent | Map/list-only; no API or export | None stated | Unknown — site unreachable from this environment, ToS unverified | Medium (pending permission) | Likely the largest aggregate (~6,652 pianos); outreach to hello@worldpianos.org needed |
 
 ## Official open-data portals

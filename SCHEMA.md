@@ -16,10 +16,12 @@ One row per physical piano. Wiki-style: edited in place, every change kept.
 | `venue_type` | station / airport / cafe / park / … (consumer filter). |
 | `access` | `public` · `bookable` · `ask`. |
 | `hours`, `instrument` | Practical facts. |
-| `description` | The authored paragraph on the piano page (record content — a visitor's note is an observation, a different thing). |
+| `description` / `description_story` | Two authored paragraphs, **local-language canonical**: the place (timeless) and the piano's story (temporal). Record content — a visitor's note is an observation, a different thing. |
+| `description_en` / `description_story_en` | English renderings of the pair; null when the local language IS English. |
 | `video_url` | Hero video link (YouTube/TikTok) — embedded, never our bytes. |
 | `status` | `active` · `temporary` · `needs_verification` · `removed` (a tombstone keeps its page and history). |
-| `last_verified_at/by` | Cache over observations — only a human confirmation ever sets it. |
+| `last_verified_at/by` | **Ambassador-verified**: set only when an admin or approved ambassador files their own dated present-testimony. Anyone else's report is an ordinary sighting. Drives the badge. |
+| `fresh_score` | 0–100 freshness, recomputed on every observation write: recency (2-year half-life) × volume × evidence span, collapsed while the latest signal is an unresolved gone-report. Verification refreshes it. |
 
 ## Revisions — the record's history
 
@@ -29,11 +31,14 @@ revertable; nothing is ever lost.
 ## Observations — the witness stream
 
 What people (and attested partner apps) say about the world: `present` /
-`gone` / `note` / `photo`, with method, actor, optional text/media/url,
-timestamps. Append-only; moderation *voids* (hidden_by/at/reason), never
-deletes. Sightings from crosswalked sources are **mirrored here as fact rows**
-(type + moment + source tag + link — never their text or media; see RFC-0001
-§4), tagged by `source` so testimony and mirrors never mix in exports.
+`gone` / `note` / `photo`, with method (gps/qr/photo/operator/api — provenance,
+never a gate), actor, optional text/media/url, timestamps. Site plinks and
+notes land here too. Append-only; moderation *voids* (hidden_by/at/reason),
+never deletes. Sightings from crosswalked sources are **mirrored here as fact
+rows** — type + moment + source tag + link, with the source caption held
+**verbatim** and displayed only as an attributed quote (RFC-0001 §4: never
+exported, never record content). The `source` column keeps testimony and
+mirrors from ever mixing in exports.
 
 ## Candidates + source_events — other people's claims
 
@@ -50,14 +55,17 @@ duplicate, and how a source's future signals arrive as news about OUR piano.
 
 ## Accounts & roles
 
-`contributor` → **Keeper** (tends one piano) → **Ambassador** (an area: verify,
-photograph, moderate) → **Curator** (the dataset: the inbox, identity
-decisions). Consuming apps pass through which of their users acted, so
-attribution stays about people.
+`contributor` → **Ambassador** (vetted person: verify — the badge, photograph,
+moderate anywhere; their city is patrol + identity) → **Curator** (the dataset:
+the inbox, identity decisions). Consuming apps pass through which of their
+users acted, so attribution stays about people. Roles reasoning:
+`CONTRIBUTING.md`.
 
 ## Exports & API
 
-CC0 exports (GeoJSON/CSV/JSON) in the dataset repo, each record carrying its
-crosswalk with evidence facts (sighting counts/spans/links — facts ship,
-expression stays at the source). A read API, a write API for partner
-attestations, and a change feed are the contract to build.
+CC0 exports: `/pianos.geojson` ships each record with its descriptions (both
+languages), `freshness`, derived activity facts (`sightings`, `first_seen`,
+`last_activity`), `ambassador_verified` + `last_verified`, the video link, and
+provenance — **facts ship, expression stays at the source**: observation text
+and photos never export. A read API, a write API for partner attestations, and
+a change feed are the contract to build.
