@@ -149,8 +149,10 @@ records where it came from (`observations.source`); what that MEANS is looked
 up in the source registry (SOURCES.md), which states each source's terms:
 
 - `'site'` → contributed under the CC0 dedication → CC0.
-- an import slug whose registry entry is CC0/public domain (e.g.
-  airportpianos) → adoptable as CC0 outright.
+- an import slug whose registry entry is CC0/public domain → adoptable as
+  CC0 outright. (No current photo source qualifies: airportpianos' public-
+  domain dedication covers its DATA — and awaits a path/LICENSE confirmation
+  from the maintainer; see its source profile.)
 - an import slug without such terms (e.g. pianos.pub) → a curator-derived
   feature photo (best sighting, faces blurred) is NOT CC0: stored with the
   original's link and an explicit marker, shown on the site, never
