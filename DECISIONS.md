@@ -7,7 +7,7 @@ and what would make us revisit it. Decisions change via pull request to this fil
 Status values: **Proposed** (recommended, awaiting joint ratification) · **Accepted** · **Superseded**.
 
 > **The Aug 2026 data-handling decisions** (leads pipeline, observation
-> mirroring, paraphrase rule, canonical removal, roles, presence-as-provenance)
+> mirroring, quote-with-attribution rule, canonical removal, roles, presence-as-provenance)
 > live together in **[RFC-0001](rfcs/0001-data-handling.md)** — one document,
 > ratified as a whole, instead of a dozen ADR entries.
 

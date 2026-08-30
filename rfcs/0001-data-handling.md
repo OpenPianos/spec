@@ -93,13 +93,17 @@ Mirrored rows are not testimony, and three rules keep the line honest:
 3. **No echo.** Outbound testimony (feeds, partner exchanges) filters
    `source = 'site'` and attested partner slugs — a mirror of their data
    never leaves us wearing our uniform.
-4. **Paraphrase, not copy.** A mirror row may carry OUR one-line paraphrase
-   of the sighting's caption ("a visitor described playing while waiting
-   for a flight") — our authorship, CC0, always labeled *paraphrase* and
-   linked to the original. Never the caption's own wording. Generated at
-   link/create time (not corpus-wide), publish-first, ambassador-voidable —
-   the same post-moderation stance as photos (§8 applies: marked as
-   AI-drafted derived text, never record content).
+4. **Quote with attribution, never absorb.** A mirror row carries the
+   sighting's caption **verbatim** in `text` (capped at 500 chars), and is
+   displayed only as an attributed quote — quotation marks, source name,
+   link to the original. The `source` column is the metadata that keeps it
+   honest: mirror text is someone else's expression held under ordinary
+   quotation, it is **excluded from every export** (observations never ship
+   in the CC0 dataset), and it never seeds record content — descriptions
+   must restate the facts in our own words (§5). Ambassador-voidable, same
+   post-moderation stance as photos. *(Supersedes the earlier AI-paraphrase
+   rule, 30 Aug: paraphrasing a one-line eyewitness note risked distortion
+   under our own voice; a labeled quote is both more honest and lossless.)*
 
 Live attestations differ from scraped history: a partner app **pushing** a
 claim through the write API stands behind it in real time and lands as a
