@@ -144,12 +144,22 @@ normalized to English in the data; interfaces localize display.
 
 ### Photos and the feature image
 
-**The licensing flag is `observations.source`.** A photo row with
-`source = 'site'` was contributed under the CC0 dedication and is CC0. A photo
-row with an import slug is a curator-derived feature photo (best source
-sighting, faces blurred): NOT CC0, stored with the original's link and an
-explicit not-CC0 marker, shown on the site but never distributed in the
-dataset — a placeholder until an ambassador's own CC0 photo replaces it.
+**Licensing = provenance resolved through the source registry.** A photo row
+records where it came from (`observations.source`); what that MEANS is looked
+up in the source registry (SOURCES.md), which states each source's terms:
+
+- `'site'` → contributed under the CC0 dedication → CC0.
+- an import slug whose registry entry is CC0/public domain (e.g.
+  airportpianos) → adoptable as CC0 outright.
+- an import slug without such terms (e.g. pianos.pub) → a curator-derived
+  feature photo (best sighting, faces blurred) is NOT CC0: stored with the
+  original's link and an explicit marker, shown on the site, never
+  distributed in the dataset — a placeholder until an ambassador's own CC0
+  photo replaces it.
+
+The license lives at the SOURCE level, never guessed per row — so when a
+source's terms are ratified or change, the registry entry is the single
+switch.
 
 Photos are **publish-first, post-moderated** — like every other contribution
 (wiki model: live immediately, revertable, attributed). Ambassadors oversee
